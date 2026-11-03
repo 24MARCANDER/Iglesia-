@@ -1,731 +1,485 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gestión de Privilegios - Agenda Iglesia</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            -webkit-tap-highlight-color: transparent;
-        }
-        /* Custom scrollbar for table */
-        .custom-scrollbar::-webkit-scrollbar {
-            height: 6px;
-            width: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: #f1f5f9;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 4px;
-        }
-        /* Touch friendly form inputs on mobile */
-        input, button, textarea {
-            min-height: 44px;
-        }
-        /* Style for printable area */
-        @media print {
-            .no-print {
-                display: none !important;
-            }
-            .print-only {
-                display: block !important;
-            }
-            body {
-                background: white;
-                color: black;
-            }
-            .shadow-card {
-                box-shadow: none !important;
-                border: 1px solid #e2e8f0;
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agenda de Privilegios e Información - Iglesia</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @media print {
+      .no-print { display: none !important; }
+      body { background: white; color: black; }
+      .print-shadow-none { box-shadow: none !important; border: 1px solid #ccc; }
+    }
+    /* Estilo para que la celda se edite limpiamente */
+    [contenteditable="true"]:focus {
+      outline: 2px solid #3b82f6;
+      background-color: #eff6ff;
+      border-radius: 0.25rem;
+    }
+  </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+<body class="bg-slate-100 min-h-screen font-sans text-slate-800 pb-12">
 
-    <!-- Header Navigation -->
-    <header class="bg-indigo-900 text-white shadow-md no-print sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
-                <!-- Logo & Title -->
-                <div class="flex items-center space-x-2 sm:space-x-3">
-                    <div class="bg-indigo-700 p-2 rounded-lg text-indigo-200 flex-shrink-0">
-                        <i class="fa-solid font-bold fa-church text-lg sm:text-xl"></i>
-                    </div>
-                    <div>
-                        <h1 class="font-bold text-base sm:text-lg leading-tight">Agenda Iglesia</h1>
-                        <p class="text-[11px] sm:text-xs text-indigo-300">Privilegios & Servicios</p>
-                    </div>
-                </div>
-
-                <!-- Navigation Tabs -->
-                <nav class="flex space-x-1 bg-indigo-950/40 p-1 rounded-xl">
-                    <button id="tab-agenda" onclick="switchTab('agenda')" class="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium rounded-lg transition-all flex items-center space-x-1.5 bg-indigo-600 text-white shadow">
-                        <i class="fa-solid fa-calendar-days"></i>
-                        <span>Agenda</span>
-                    </button>
-                    <button id="tab-notas" onclick="switchTab('notas')" class="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium rounded-lg transition-all flex items-center space-x-1.5 text-indigo-200 hover:text-white hover:bg-indigo-800/50">
-                        <i class="fa-solid fa-note-sticky"></i>
-                        <span>Notas</span>
-                        <span id="notes-badge" class="hidden bg-amber-500 text-slate-900 text-[10px] sm:text-xs font-bold px-1.5 py-0.5 rounded-full">0</span>
-                    </button>
-                </nav>
-            </div>
+  <!-- Encabezado / Navbar -->
+  <header class="bg-indigo-900 text-white shadow-md no-print sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+      <div class="flex items-center gap-3">
+        <i class="fa-solid fa-church text-2xl text-amber-400"></i>
+        <div>
+          <h1 class="text-xl font-bold tracking-wide">Agenda de Privilegios</h1>
+          <p class="text-xs text-indigo-200">Programación de Servicios y Notas</p>
         </div>
-    </header>
+      </div>
+      
+      <!-- Controles principales -->
+      <div class="flex flex-wrap items-center justify-center gap-2 w-full md:w-auto">
+        <!-- Selector de Mes/Año -->
+        <div class="flex items-center bg-indigo-800 rounded-lg p-1 border border-indigo-700">
+          <button id="btn-prev" class="px-3 py-1.5 hover:bg-indigo-700 rounded text-indigo-200 hover:text-white transition">
+            <i class="fa-solid fa-chevron-left"></i>
+          </button>
+          <span id="label-mes-ano" class="px-3 py-1 text-sm font-semibold min-w-[130px] text-center capitalize">
+            --
+          </span>
+          <button id="btn-next" class="px-3 py-1.5 hover:bg-indigo-700 rounded text-indigo-200 hover:text-white transition">
+            <i class="fa-solid fa-chevron-right"></i>
+          </button>
+        </div>
 
-    <!-- Main Content Area -->
-    <main class="flex-grow max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
+        <!-- Botón Exportar WhatsApp -->
+        <button id="btn-copy" class="bg-emerald-600 hover:bg-emerald-500 text-white text-sm px-3 py-2 rounded-lg font-medium flex items-center gap-2 transition shadow-sm active:scale-95">
+          <i class="fa-brands fa-whatsapp text-lg"></i>
+          <span class="hidden sm:inline">Copiar WhatsApp</span>
+        </button>
 
-        <!-- ================= AGENDA VIEW ================= -->
-        <section id="view-agenda" class="space-y-4 sm:space-y-6">
-            
-            <!-- Controls Bar -->
-            <div class="bg-white p-3.5 sm:p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col gap-3.5 no-print">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <div>
-                        <h2 class="text-lg sm:text-xl font-bold text-slate-800" id="current-month-title">Programación de Servicios</h2>
-                        <p class="text-xs text-slate-500">Toca cualquier campo para editar o asignar los encargados.</p>
-                    </div>
+        <!-- Botón Imprimir -->
+        <button onclick="window.print()" class="bg-indigo-700 hover:bg-indigo-600 text-white text-sm px-3 py-2 rounded-lg font-medium flex items-center gap-2 transition shadow-sm active:scale-95">
+          <i class="fa-solid fa-print"></i>
+          <span class="hidden sm:inline">Imprimir / PDF</span>
+        </button>
+      </div>
+    </div>
+  </header>
 
-                    <!-- Selector de Vista (Tabla vs Tarjetas para celular) -->
-                    <div class="flex items-center self-start sm:self-auto bg-slate-100 p-1 rounded-lg border border-slate-200 text-xs font-medium">
-                        <button id="btn-view-card" onclick="toggleMobileDisplayMode('card')" class="px-2.5 py-1 rounded-md text-slate-600 hover:text-indigo-600 transition flex items-center space-x-1">
-                            <i class="fa-solid fa-border-all"></i>
-                            <span class="sm:hidden">Tarjetas</span>
-                            <span class="hidden sm:inline">Vista Móvil</span>
-                        </button>
-                        <button id="btn-view-table" onclick="toggleMobileDisplayMode('table')" class="px-2.5 py-1 rounded-md bg-white text-indigo-700 shadow-sm transition flex items-center space-x-1">
-                            <i class="fa-solid fa-table-cells"></i>
-                            <span>Tabla</span>
-                        </button>
-                    </div>
-                </div>
+  <!-- Contenedor Principal -->
+  <main class="max-w-6xl mx-auto px-2 sm:px-4 mt-4 sm:mt-6 space-y-6">
 
-                <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-1 border-t border-slate-100">
-                    <!-- Selector de Mes/Año -->
-                    <div class="flex items-center justify-between sm:justify-start space-x-2 bg-slate-100 rounded-lg p-1 border border-slate-200">
-                        <button onclick="changeMonth(-1)" class="w-9 h-9 flex items-center justify-center text-slate-600 hover:text-indigo-600 hover:bg-white rounded-lg transition active:bg-slate-200" title="Mes Anterior">
-                            <i class="fa-solid fa-chevron-left text-sm"></i>
-                        </button>
-                        <span id="month-display-name" class="text-sm font-bold px-2 text-center text-slate-700 flex-grow sm:flex-grow-0 sm:min-w-[130px]">Mes Actual</span>
-                        <button onclick="changeMonth(1)" class="w-9 h-9 flex items-center justify-center text-slate-600 hover:text-indigo-600 hover:bg-white rounded-lg transition active:bg-slate-200" title="Mes Siguiente">
-                            <i class="fa-solid fa-chevron-right text-sm"></i>
-                        </button>
-                    </div>
-
-                    <!-- Botones de Acción -->
-                    <div class="grid grid-cols-2 sm:flex items-center gap-2">
-                        <!-- Botón Exportar WhatsApp -->
-                        <button onclick="copyForWhatsApp()" class="bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center justify-center space-x-2 shadow-sm">
-                            <i class="fa-brands fa-whatsapp text-base"></i>
-                            <span>Copiar texto</span>
-                        </button>
-
-                        <!-- Botón Imprimir / PDF -->
-                        <button onclick="window.print()" class="bg-slate-700 hover:bg-slate-800 active:bg-slate-900 text-white px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center justify-center space-x-2 shadow-sm">
-                            <i class="fa-solid fa-print text-sm"></i>
-                            <span>Imprimir / PDF</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Print Header (Only visible on print) -->
-            <div class="hidden print-only mb-6 text-center border-b pb-4">
-                <h1 class="text-2xl font-bold text-slate-900">Programación de Privilegios de la Iglesia</h1>
-                <p id="print-month-title" class="text-sm text-slate-600 mt-1"></p>
-            </div>
-
-            <!-- TABLE VIEW CONTAINER -->
-            <div id="container-table-view" class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden shadow-card">
-                <div class="overflow-x-auto custom-scrollbar">
-                    <table class="w-full text-left border-collapse min-w-[620px]">
-                        <thead>
-                            <tr class="bg-slate-100/90 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-600">
-                                <th class="py-3 px-3.5 w-40">
-                                    <div class="flex items-center space-x-1.5">
-                                        <i class="fa-regular fa-calendar text-indigo-600"></i>
-                                        <span>Fecha</span>
-                                    </div>
-                                </th>
-                                <th class="py-3 px-3">
-                                    <div class="flex items-center space-x-1.5">
-                                        <i class="fa-solid fa-user-shield text-amber-600"></i>
-                                        <span>Diaconado</span>
-                                    </div>
-                                </th>
-                                <th class="py-3 px-3">
-                                    <div class="flex items-center space-x-1.5">
-                                        <i class="fa-solid fa-music text-rose-600"></i>
-                                        <span>Alabanza</span>
-                                    </div>
-                                </th>
-                                <th class="py-3 px-3">
-                                    <div class="flex items-center space-x-1.5">
-                                        <i class="fa-solid fa-book-open text-blue-600"></i>
-                                        <span>Prédica</span>
-                                    </div>
-                                </th>
-                                <th class="py-3 px-3">
-                                    <div class="flex items-center space-x-1.5">
-                                        <i class="fa-solid fa-tv text-purple-600"></i>
-                                        <span>Multimedia</span>
-                                    </div>
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody id="schedule-tbody" class="divide-y divide-slate-100 text-sm">
-                            <!-- Rows dynamically populated by JS -->
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Footer note inside Card -->
-                <div class="bg-slate-50 p-3 px-4 border-t border-slate-100 text-xs text-slate-500 flex flex-col sm:flex-row justify-between items-center gap-2 no-print">
-                    <span class="flex items-center gap-1.5 text-center sm:text-left">
-                        <i class="fa-solid fa-circle-info text-indigo-500 flex-shrink-0"></i>
-                        Los cambios se guardan automáticamente.
-                    </span>
-                    <button onclick="clearCurrentMonthData()" class="text-slate-400 hover:text-red-500 transition underline text-xs">
-                        Limpiar este mes
-                    </button>
-                </div>
-            </div>
-
-            <!-- MOBILE CARDS VIEW CONTAINER -->
-            <div id="container-card-view" class="hidden space-y-3.5 no-print">
-                <!-- Cards dynamically populated by JS for mobile -->
-            </div>
-        </section>
-
-
-        <!-- ================= NOTES VIEW ================= -->
-        <section id="view-notas" class="hidden space-y-5">
-            
-            <!-- Notes Header & Add Form -->
-            <div class="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-slate-200">
-                <h2 class="text-lg sm:text-xl font-bold text-slate-800 mb-3 flex items-center gap-2">
-                    <i class="fa-solid fa-pen-to-square text-indigo-600"></i>
-                    Avisos & Recordatorios
-                </h2>
-                
-                <form id="note-form" onsubmit="addNote(event)" class="space-y-3.5">
-                    <div>
-                        <label for="note-title" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Título / Asunto</label>
-                        <input type="text" id="note-title" required placeholder="Ej. Ensayo de alabanza, Mantenimiento..." 
-                            class="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition">
-                    </div>
-                    <div>
-                        <label for="note-detail" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Detalles</label>
-                        <textarea id="note-detail" rows="3" required placeholder="Escribe detalles del anuncio u horarios..." 
-                            class="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition"></textarea>
-                    </div>
-                    <div class="flex justify-end">
-                        <button type="submit" class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition flex items-center justify-center space-x-2 shadow-sm">
-                            <i class="fa-solid fa-plus text-xs"></i>
-                            <span>Agregar Nota</span>
-                        </button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Notes List Container -->
-            <div class="space-y-3">
-                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 px-1">Notas Guardadas</h3>
-                <div id="notes-list" class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                    <!-- Dynamic Notes rendered here -->
-                </div>
-            </div>
-        </section>
-
-    </main>
-
-    <!-- Notification Toast -->
-    <div id="toast" class="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-5 sm:max-w-sm bg-slate-800 text-white px-4 py-3 rounded-xl shadow-xl text-xs sm:text-sm transform translate-y-20 opacity-0 transition-all duration-300 flex items-center space-x-2.5 z-50">
-        <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400 text-base flex-shrink-0"></i>
-        <span id="toast-message" class="flex-grow">Guardado con éxito</span>
+    <!-- Alternador de vista Móvil / Tabla -->
+    <div class="flex justify-between items-center bg-white p-3 rounded-xl shadow-sm border border-slate-200">
+      <div class="text-xs sm:text-sm text-slate-500 flex items-center gap-1.5">
+        <i class="fa-solid fa-circle-info text-indigo-600"></i>
+        <span>Los cambios se guardan de forma automática.</span>
+      </div>
+      <!-- Selector de Vista (Solo Visible en Pantallas Pequeñas) -->
+      <div class="flex md:hidden bg-slate-100 p-1 rounded-lg border border-slate-200">
+        <button id="btn-view-cards" class="px-2.5 py-1 text-xs font-semibold rounded-md transition bg-white text-indigo-900 shadow-sm">
+          <i class="fa-solid fa-grip-vertical mr-1"></i>Tarjetas
+        </button>
+        <button id="btn-view-table" class="px-2.5 py-1 text-xs font-semibold rounded-md transition text-slate-600">
+          <i class="fa-solid fa-table mr-1"></i>Tabla
+        </button>
+      </div>
     </div>
 
-    <!-- JavaScript Application Logic -->
-    <script>
-        // State Management
-        let currentDate = new Date();
-        let currentYear = currentDate.getFullYear();
-        let currentMonth = currentDate.getMonth(); // 0-indexed
-        let mobileMode = 'table'; // 'table' or 'card'
+    <!-- SECCIÓN 1: CRONOGRAMA DE PRIVILEGIOS -->
+    <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden print-shadow-none">
+      <div class="p-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+        <h2 class="font-bold text-slate-800 flex items-center gap-2 text-base sm:text-lg">
+          <i class="fa-regular fa-calendar-check text-indigo-600"></i>
+          Cronograma del Mes
+        </h2>
+        <span class="text-xs font-semibold px-2.5 py-1 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-full">
+          Miércoles, Sábados y Domingos
+        </span>
+      </div>
 
-        // Keys for LocalStorage
-        const STORAGE_PREFIX = 'church_privileges_app_';
+      <!-- VISTA EN TABLA (Predeterminada para Pantallas Medianas/Grandes) -->
+      <div id="container-table" class="overflow-x-auto">
+        <table class="w-full text-left border-collapse min-w-[600px]">
+          <thead>
+            <tr class="bg-indigo-900 text-white text-xs uppercase tracking-wider">
+              <th class="p-3 w-40 border-r border-indigo-800">Fecha / Día</th>
+              <th class="p-3 border-r border-indigo-800">Diaconado</th>
+              <th class="p-3 border-r border-indigo-800">Alabanza</th>
+              <th class="p-3 border-r border-indigo-800">Prédica</th>
+              <th class="p-3">Multimedia</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-privilegios" class="divide-y divide-slate-200 text-sm">
+            <!-- Filas generadas dinámicamente -->
+          </tbody>
+        </table>
+      </div>
 
-        // Initial Load
-        window.onload = function() {
-            // Auto switch to card mode if very small screen
-            if (window.innerWidth < 640) {
-                mobileMode = 'card';
-            }
-            updateViewButtons();
-            renderSchedule();
-            renderNotes();
-        };
+      <!-- VISTA EN TARJETAS (Optimizada para Móviles) -->
+      <div id="container-cards" class="hidden md:hidden p-3 space-y-3 bg-slate-50">
+        <!-- Tarjetas generadas dinámicamente -->
+      </div>
+    </section>
 
-        function toggleMobileDisplayMode(mode) {
-            mobileMode = mode;
-            updateViewButtons();
-            
-            const tableView = document.getElementById('container-table-view');
-            const cardView = document.getElementById('container-card-view');
+    <!-- SECCIÓN 2: APARTADO DE NOTAS / AVISOS -->
+    <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden print-shadow-none">
+      <div class="p-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+        <h2 class="font-bold text-slate-800 flex items-center gap-2 text-base sm:text-lg">
+          <i class="fa-regular fa-note-sticky text-indigo-600"></i>
+          Notas y Avisos Importantes
+        </h2>
+      </div>
 
-            if (mobileMode === 'card') {
-                tableView.classList.add('hidden');
-                cardView.classList.remove('hidden');
-            } else {
-                tableView.classList.remove('hidden');
-                cardView.classList.add('hidden');
-            }
-        }
+      <div class="p-4 space-y-4">
+        <!-- Formulario Agregar Nota -->
+        <form id="form-nota" class="flex flex-col sm:flex-row gap-2 no-print">
+          <input 
+            type="text" 
+            id="input-nota" 
+            placeholder="Escribe una nota o aviso rápido (ej: Ensayos, Anuncios, Limpieza)..." 
+            required 
+            class="flex-grow px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+          >
+          <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition flex items-center justify-center gap-1.5 shadow-sm active:scale-95">
+            <i class="fa-solid fa-plus"></i> Agregar
+          </button>
+        </form>
 
-        function updateViewButtons() {
-            const btnTable = document.getElementById('btn-view-table');
-            const btnCard = document.getElementById('btn-view-card');
+        <!-- Lista de Notas -->
+        <ul id="lista-notas" class="space-y-2">
+          <!-- Notas generadas dinámicamente -->
+        </ul>
+      </div>
+    </section>
 
-            if (mobileMode === 'card') {
-                btnCard.className = "px-2.5 py-1 rounded-md bg-white text-indigo-700 shadow-sm transition flex items-center space-x-1";
-                btnTable.className = "px-2.5 py-1 rounded-md text-slate-600 hover:text-indigo-600 transition flex items-center space-x-1";
-            } else {
-                btnTable.className = "px-2.5 py-1 rounded-md bg-white text-indigo-700 shadow-sm transition flex items-center space-x-1";
-                btnCard.className = "px-2.5 py-1 rounded-md text-slate-600 hover:text-indigo-600 transition flex items-center space-x-1";
-            }
-        }
+  </main>
 
-        // Navigation Switcher
-        function switchTab(tab) {
-            const agendaView = document.getElementById('view-agenda');
-            const notasView = document.getElementById('view-notas');
-            const tabAgendaBtn = document.getElementById('tab-agenda');
-            const tabNotasBtn = document.getElementById('tab-notas');
+  <!-- Lógica en JavaScript -->
+  <script>
+    // Variables globales
+    let fechaActual = new Date();
+    let modoVista = 'cards'; // 'cards' o 'table' para vista móvil
 
-            if (tab === 'agenda') {
-                agendaView.classList.remove('hidden');
-                notasView.classList.add('hidden');
-                
-                tabAgendaBtn.className = "px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium rounded-lg transition-all flex items-center space-x-1.5 bg-indigo-600 text-white shadow";
-                tabNotasBtn.className = "px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium rounded-lg transition-all flex items-center space-x-1.5 text-indigo-200 hover:text-white hover:bg-indigo-800/50";
-            } else {
-                agendaView.classList.add('hidden');
-                notasView.classList.remove('hidden');
+    // Elementos DOM
+    const labelMesAno = document.getElementById('label-mes-ano');
+    const tbodyPrivilegios = document.getElementById('tbody-privilegios');
+    const containerCards = document.getElementById('container-cards');
+    const containerTable = document.getElementById('container-table');
+    const formNota = document.getElementById('form-nota');
+    const inputNota = document.getElementById('input-nota');
+    const listaNotas = document.getElementById('lista-notas');
+    const btnCopy = document.getElementById('btn-copy');
+    const btnViewCards = document.getElementById('btn-view-cards');
+    const btnViewTable = document.getElementById('btn-view-table');
 
-                tabNotasBtn.className = "px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium rounded-lg transition-all flex items-center space-x-1.5 bg-indigo-600 text-white shadow";
-                tabAgendaBtn.className = "px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium rounded-lg transition-all flex items-center space-x-1.5 text-indigo-200 hover:text-white hover:bg-indigo-800/50";
-            }
-        }
+    // Nombres de los meses y días en español
+    const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+    const diasSemana = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 
-        // Change Month Controls
-        function changeMonth(delta) {
-            currentMonth += delta;
-            if (currentMonth > 11) {
-                currentMonth = 0;
-                currentYear++;
-            } else if (currentMonth < 0) {
-                currentMonth = 11;
-                currentYear--;
-            }
-            renderSchedule();
-        }
+    // Inicialización
+    document.addEventListener('DOMContentLoaded', () => {
+      renderizarTodo();
 
-        // Generate target dates: Wednesdays (3), Saturdays (6), Sundays (0) of current month + 1st Sunday of next month
-        function getChurchDates(year, month) {
-            const dates = [];
-            const date = new Date(year, month, 1);
-            
-            while (date.getMonth() === month) {
-                const dayOfWeek = date.getDay();
-                if (dayOfWeek === 3 || dayOfWeek === 6 || dayOfWeek === 0) {
-                    dates.push(new Date(date));
-                }
-                date.setDate(date.getDate() + 1);
-            }
+      document.getElementById('btn-prev').addEventListener('click', () => {
+        fechaActual.setMonth(fechaActual.getMonth() - 1);
+        renderizarTodo();
+      });
 
-            const nextMonthDate = new Date(year, month + 1, 1);
-            while (nextMonthDate.getDay() !== 0) {
-                nextMonthDate.setDate(nextMonthDate.getDate() + 1);
-            }
-            dates.push(new Date(nextMonthDate));
+      document.getElementById('btn-next').addEventListener('click', () => {
+        fechaActual.setMonth(fechaActual.getMonth() + 1);
+        renderizarTodo();
+      });
 
-            return dates;
-        }
+      btnViewCards.addEventListener('click', () => cambiarVistaMovil('cards'));
+      btnViewTable.addEventListener('click', () => cambiarVistaMovil('table'));
 
-        // Format Date helpers
-        const monthNames = [
-            "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-            "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
-        ];
+      formNota.addEventListener('submit', (e) => {
+        e.preventDefault();
+        agregarNota();
+      });
+
+      btnCopy.addEventListener('click', copiarParaWhatsApp);
+    });
+
+    // Alternar vista móvil entre tarjetas y tabla
+    function cambiarVistaMovil(vista) {
+      modoVista = vista;
+      if (vista === 'cards') {
+        containerCards.classList.remove('hidden');
+        containerTable.classList.add('hidden');
+        btnViewCards.classList.add('bg-white', 'text-indigo-900', 'shadow-sm');
+        btnViewCards.classList.remove('text-slate-600');
+        btnViewTable.classList.remove('bg-white', 'text-indigo-900', 'shadow-sm');
+        btnViewTable.classList.add('text-slate-600');
+      } else {
+        containerCards.classList.add('hidden');
+        containerTable.classList.remove('hidden');
+        btnViewTable.classList.add('bg-white', 'text-indigo-900', 'shadow-sm');
+        btnViewTable.classList.remove('text-slate-600');
+        btnViewCards.classList.remove('bg-white', 'text-indigo-900', 'shadow-sm');
+        btnViewCards.classList.add('text-slate-600');
+      }
+    }
+
+    // Renderizar Header, Tabla, Tarjetas y Notas
+    function renderizarTodo() {
+      const year = fechaActual.getFullYear();
+      const month = fechaActual.getMonth();
+
+      // Actualizar cabecera
+      labelMesAno.textContent = `${meses[month]} ${year}`;
+
+      // Obtener fechas relevantes (Miércoles, Sábados, Domingos) del mes actual + primer Domingo del siguiente
+      const fechas = obtenerFechasEspeciales(year, month);
+
+      // Cargar datos previos
+      const keyStorage = `privilegios_${year}_${month}`;
+      const datosGuardados = JSON.parse(localStorage.getItem(keyStorage)) || {};
+
+      // Renderizar Tabla
+      tbodyPrivilegios.innerHTML = '';
+      containerCards.innerHTML = '';
+
+      fechas.forEach((f) => {
+        const idFecha = f.iso;
+        const datos = datosGuardados[idFecha] || { diaconado: '', alabanza: '', predica: '', multimedia: '' };
+
+        // 1. Fila de la Tabla
+        const tr = document.createElement('tr');
+        tr.className = f.esSiguienteMes ? 'bg-amber-50/60 font-medium' : 'hover:bg-slate-50 transition';
+
+        tr.innerHTML = `
+          <td class="p-3 font-semibold text-slate-700 border-r border-slate-200">
+            <div class="flex items-center justify-between">
+              <span>${f.formatoTexto}</span>
+              ${f.esSiguienteMes ? '<span class="text-[10px] bg-amber-200 text-amber-800 px-1.5 py-0.5 rounded font-bold">Prox. Mes</span>' : ''}
+            </div>
+          </td>
+          <td class="p-2 border-r border-slate-200" contenteditable="true" data-fecha="${idFecha}" data-campo="diaconado">${datos.diaconado}</td>
+          <td class="p-2 border-r border-slate-200" contenteditable="true" data-fecha="${idFecha}" data-campo="alabanza">${datos.alabanza}</td>
+          <td class="p-2 border-r border-slate-200" contenteditable="true" data-fecha="${idFecha}" data-campo="predica">${datos.predica}</td>
+          <td class="p-2" contenteditable="true" data-fecha="${idFecha}" data-campo="multimedia">${datos.multimedia}</td>
+        `;
+        tbodyPrivilegios.appendChild(tr);
+
+        // 2. Tarjeta para Móvil
+        const card = document.createElement('div');
+        card.className = `p-4 rounded-lg border shadow-sm ${f.esSiguienteMes ? 'bg-amber-50/80 border-amber-200' : 'bg-white border-slate-200'}`;
+        card.innerHTML = `
+          <div class="flex justify-between items-center mb-3 pb-2 border-b border-slate-200">
+            <span class="font-bold text-slate-800 flex items-center gap-2">
+              <i class="fa-regular fa-calendar-days text-indigo-600"></i> ${f.formatoTexto}
+            </span>
+            ${f.esSiguienteMes ? '<span class="text-[10px] bg-amber-200 text-amber-800 px-2 py-0.5 rounded font-bold">Próximo Mes</span>' : ''}
+          </div>
+          <div class="grid grid-cols-1 gap-2 text-xs">
+            <div>
+              <label class="block text-slate-500 font-semibold mb-1">Diaconado:</label>
+              <input type="text" value="${datos.diaconado}" data-fecha="${idFecha}" data-campo="diaconado" class="input-card w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+            </div>
+            <div>
+              <label class="block text-slate-500 font-semibold mb-1">Alabanza:</label>
+              <input type="text" value="${datos.alabanza}" data-fecha="${idFecha}" data-campo="alabanza" class="input-card w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+            </div>
+            <div>
+              <label class="block text-slate-500 font-semibold mb-1">Prédica:</label>
+              <input type="text" value="${datos.predica}" data-fecha="${idFecha}" data-campo="predica" class="input-card w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+            </div>
+            <div>
+              <label class="block text-slate-500 font-semibold mb-1">Multimedia:</label>
+              <input type="text" value="${datos.multimedia}" data-fecha="${idFecha}" data-campo="multimedia" class="input-card w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+            </div>
+          </div>
+        `;
+        containerCards.appendChild(card);
+      });
+
+      // Event listeners para guardar datos
+      escucharCambiosLectura(keyStorage);
+
+      // Renderizar Notas
+      renderizarNotas();
+    }
+
+    // Generar días: Miércoles, Sábados y Domingos del mes + primer Domingo del siguiente mes
+    function obtenerFechasEspeciales(year, month) {
+      const fechas = [];
+      
+      // 1. Días del mes actual
+      const ultimoDiaMes = new Date(year, month + 1, 0).getDate();
+      for (let d = 1; d <= ultimoDiaMes; d++) {
+        const dateObj = new Date(year, month, d);
+        const dayOfWeek = dateObj.getDay(); // 0: Dom, 3: Mié, 6: Sáb
         
-        const dayNames = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
-
-        function formatDateKey(dateObj) {
-            const y = dateObj.getFullYear();
-            const m = String(dateObj.getMonth() + 1).padStart(2, '0');
-            const d = String(dateObj.getDate()).padStart(2, '0');
-            return `${y}-${m}-${d}`;
+        if (dayOfWeek === 3 || dayOfWeek === 6 || dayOfWeek === 0) {
+          fechas.push({
+            iso: `${year}-${month + 1}-${d}`,
+            formatoTexto: `${diasSemana[dayOfWeek]} ${d}`,
+            esSiguienteMes: false
+          });
         }
+      }
 
-        // Render Schedule Table and Cards
-        function renderSchedule() {
-            const tbody = document.getElementById('schedule-tbody');
-            const cardContainer = document.getElementById('container-card-view');
-            tbody.innerHTML = '';
-            cardContainer.innerHTML = '';
+      // 2. Primer Domingo del mes siguiente
+      let nextMonth = month + 1;
+      let nextYear = year;
+      if (nextMonth > 11) {
+        nextMonth = 0;
+        nextYear++;
+      }
 
-            const monthTitle = `${monthNames[currentMonth]} ${currentYear}`;
-            document.getElementById('current-month-title').innerText = `Cronograma - ${monthTitle}`;
-            document.getElementById('month-display-name').innerText = monthTitle;
-            document.getElementById('print-month-title').innerText = `Período: ${monthTitle}`;
-
-            const dates = getChurchDates(currentYear, currentMonth);
-            const storageKey = `${STORAGE_PREFIX}data_${currentYear}_${currentMonth}`;
-            const monthData = JSON.parse(localStorage.getItem(storageKey) || '{}');
-
-            dates.forEach((d) => {
-                const dateKey = formatDateKey(d);
-                const dayName = dayNames[d.getDay()];
-                const formattedDateNum = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
-                
-                const isNextMonth = d.getMonth() !== currentMonth;
-
-                const rowValues = monthData[dateKey] || {
-                    diaconado: '',
-                    alabanza: '',
-                    predica: '',
-                    multimedia: ''
-                };
-
-                let badgeStyle = 'bg-slate-100 text-slate-700';
-                if (d.getDay() === 0) badgeStyle = 'bg-indigo-100 text-indigo-800 font-bold';
-                if (d.getDay() === 3) badgeStyle = 'bg-teal-100 text-teal-800 font-semibold';
-                if (d.getDay() === 6) badgeStyle = 'bg-purple-100 text-purple-800 font-semibold';
-
-                // 1. RENDER TABLE ROW
-                const tr = document.createElement('tr');
-                tr.className = isNextMonth ? 'bg-amber-50/40 border-t-2 border-amber-200/60' : 'hover:bg-slate-50/80 transition';
-
-                tr.innerHTML = `
-                    <td class="py-2.5 px-3.5 font-medium text-slate-700 whitespace-nowrap align-middle">
-                        <div class="flex items-center space-x-2">
-                            <span class="px-2.5 py-1 rounded-md text-xs ${badgeStyle}">
-                                ${dayName}
-                            </span>
-                            <span class="text-sm font-bold text-slate-800">${formattedDateNum}</span>
-                            ${isNextMonth ? '<span class="text-[10px] bg-amber-200 text-amber-800 px-1.5 py-0.5 rounded uppercase font-bold">Prox</span>' : ''}
-                        </div>
-                    </td>
-                    <td class="py-1.5 px-2 align-middle">
-                        <input type="text" value="${escapeHtml(rowValues.diaconado)}" 
-                            data-date="${dateKey}" data-field="diaconado"
-                            placeholder="Encargado..."
-                            onchange="saveCell(this)"
-                            class="w-full bg-transparent px-2.5 py-2 rounded-lg border border-transparent hover:border-slate-300 focus:border-indigo-500 focus:bg-white focus:outline-none text-slate-700 text-sm transition">
-                    </td>
-                    <td class="py-1.5 px-2 align-middle">
-                        <input type="text" value="${escapeHtml(rowValues.alabanza)}" 
-                            data-date="${dateKey}" data-field="alabanza"
-                            placeholder="Director / Grupo..."
-                            onchange="saveCell(this)"
-                            class="w-full bg-transparent px-2.5 py-2 rounded-lg border border-transparent hover:border-slate-300 focus:border-indigo-500 focus:bg-white focus:outline-none text-slate-700 text-sm transition">
-                    </td>
-                    <td class="py-1.5 px-2 align-middle">
-                        <input type="text" value="${escapeHtml(rowValues.predica)}" 
-                            data-date="${dateKey}" data-field="predica"
-                            placeholder="Predicador..."
-                            onchange="saveCell(this)"
-                            class="w-full bg-transparent px-2.5 py-2 rounded-lg border border-transparent hover:border-slate-300 focus:border-indigo-500 focus:bg-white focus:outline-none text-slate-700 text-sm transition">
-                    </td>
-                    <td class="py-1.5 px-2 align-middle">
-                        <input type="text" value="${escapeHtml(rowValues.multimedia)}" 
-                            data-date="${dateKey}" data-field="multimedia"
-                            placeholder="Sonido / Proyección..."
-                            onchange="saveCell(this)"
-                            class="w-full bg-transparent px-2.5 py-2 rounded-lg border border-transparent hover:border-slate-300 focus:border-indigo-500 focus:bg-white focus:outline-none text-slate-700 text-sm transition">
-                    </td>
-                `;
-                tbody.appendChild(tr);
-
-                // 2. RENDER MOBILE CARD
-                const card = document.createElement('div');
-                card.className = `bg-white p-4 rounded-xl border ${isNextMonth ? 'border-amber-300 bg-amber-50/20' : 'border-slate-200'} shadow-sm space-y-3`;
-                card.innerHTML = `
-                    <div class="flex justify-between items-center pb-2 border-b border-slate-100">
-                        <div class="flex items-center space-x-2">
-                            <span class="px-2.5 py-1 rounded-md text-xs ${badgeStyle}">
-                                ${dayName}
-                            </span>
-                            <span class="text-base font-bold text-slate-800">${formattedDateNum}</span>
-                        </div>
-                        ${isNextMonth ? '<span class="text-[10px] bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full uppercase font-bold">Primer Domingo Próximo Mes</span>' : ''}
-                    </div>
-
-                    <div class="grid grid-cols-1 gap-2.5 text-xs">
-                        <div>
-                            <label class="block font-semibold text-slate-500 mb-1 flex items-center space-x-1">
-                                <i class="fa-solid fa-user-shield text-amber-600 text-[11px]"></i>
-                                <span>Diaconado</span>
-                            </label>
-                            <input type="text" value="${escapeHtml(rowValues.diaconado)}" 
-                                data-date="${dateKey}" data-field="diaconado"
-                                placeholder="Escribir encargado..."
-                                onchange="saveCell(this)"
-                                class="w-full bg-slate-50 px-3 py-2 rounded-lg border border-slate-200 focus:bg-white focus:border-indigo-500 focus:outline-none text-slate-800 text-sm">
-                        </div>
-
-                        <div>
-                            <label class="block font-semibold text-slate-500 mb-1 flex items-center space-x-1">
-                                <i class="fa-solid fa-music text-rose-600 text-[11px]"></i>
-                                <span>Alabanza</span>
-                            </label>
-                            <input type="text" value="${escapeHtml(rowValues.alabanza)}" 
-                                data-date="${dateKey}" data-field="alabanza"
-                                placeholder="Escribir grupo/director..."
-                                onchange="saveCell(this)"
-                                class="w-full bg-slate-50 px-3 py-2 rounded-lg border border-slate-200 focus:bg-white focus:border-indigo-500 focus:outline-none text-slate-800 text-sm">
-                        </div>
-
-                        <div>
-                            <label class="block font-semibold text-slate-500 mb-1 flex items-center space-x-1">
-                                <i class="fa-solid fa-book-open text-blue-600 text-[11px]"></i>
-                                <span>Prédica</span>
-                            </label>
-                            <input type="text" value="${escapeHtml(rowValues.predica)}" 
-                                data-date="${dateKey}" data-field="predica"
-                                placeholder="Escribir predicador..."
-                                onchange="saveCell(this)"
-                                class="w-full bg-slate-50 px-3 py-2 rounded-lg border border-slate-200 focus:bg-white focus:border-indigo-500 focus:outline-none text-slate-800 text-sm">
-                        </div>
-
-                        <div>
-                            <label class="block font-semibold text-slate-500 mb-1 flex items-center space-x-1">
-                                <i class="fa-solid fa-tv text-purple-600 text-[11px]"></i>
-                                <span>Multimedia</span>
-                            </label>
-                            <input type="text" value="${escapeHtml(rowValues.multimedia)}" 
-                                data-date="${dateKey}" data-field="multimedia"
-                                placeholder="Escribir encargado de audio/vídeo..."
-                                onchange="saveCell(this)"
-                                class="w-full bg-slate-50 px-3 py-2 rounded-lg border border-slate-200 focus:bg-white focus:border-indigo-500 focus:outline-none text-slate-800 text-sm">
-                        </div>
-                    </div>
-                `;
-                cardContainer.appendChild(card);
-            });
-
-            // Maintain tab/card toggle view state
-            toggleMobileDisplayMode(mobileMode);
+      for (let d = 1; d <= 7; d++) {
+        const dateObj = new Date(nextYear, nextMonth, d);
+        if (dateObj.getDay() === 0) { // Domingo
+          fechas.push({
+            iso: `${nextYear}-${nextMonth + 1}-${d}`,
+            formatoTexto: `${diasSemana[0]} ${d} (${meses[nextMonth]})`,
+            esSiguienteMes: true
+          });
+          break;
         }
+      }
 
-        // Save a single cell change to localStorage & synchronize input elements across views
-        function saveCell(inputElem) {
-            const dateKey = inputElem.getAttribute('data-date');
-            const field = inputElem.getAttribute('data-field');
-            const value = inputElem.value.trim();
+      return fechas;
+    }
 
-            const storageKey = `${STORAGE_PREFIX}data_${currentYear}_${currentMonth}`;
-            const monthData = JSON.parse(localStorage.getItem(storageKey) || '{}');
+    // Escuchar cambios para auto-guardar
+    function escucharCambiosLectura(keyStorage) {
+      // Guardado desde la tabla editable
+      const celdas = tbodyPrivilegios.querySelectorAll('[contenteditable="true"]');
+      celdas.forEach(celda => {
+        celda.addEventListener('input', () => {
+          const fecha = celda.dataset.fecha;
+          const campo = celda.dataset.campo;
+          const valor = celda.innerText.trim();
+          
+          guardarDatoPrivilegio(keyStorage, fecha, campo, valor);
+          sincronizarInputCard(fecha, campo, valor);
+        });
+      });
 
-            if (!monthData[dateKey]) {
-                monthData[dateKey] = { diaconado: '', alabanza: '', predica: '', multimedia: '' };
-            }
+      // Guardado desde las tarjetas móviles
+      const inputsCard = containerCards.querySelectorAll('.input-card');
+      inputsCard.forEach(input => {
+        input.addEventListener('input', () => {
+          const fecha = input.dataset.fecha;
+          const campo = input.dataset.campo;
+          const valor = input.value;
 
-            monthData[dateKey][field] = value;
-            localStorage.setItem(storageKey, JSON.stringify(monthData));
+          guardarDatoPrivilegio(keyStorage, fecha, campo, valor);
+          sincronizarCeldaTabla(fecha, campo, valor);
+        });
+      });
+    }
 
-            // Sync other inputs with same date & field (e.g. Card view <-> Table view)
-            const matchingInputs = document.querySelectorAll(`input[data-date="${dateKey}"][data-field="${field}"]`);
-            matchingInputs.forEach(inp => {
-                if (inp !== inputElem) inp.value = value;
-            });
+    function guardarDatoPrivilegio(keyStorage, fecha, campo, valor) {
+      const datos = JSON.parse(localStorage.getItem(keyStorage)) || {};
+      if (!datos[fecha]) datos[fecha] = {};
+      datos[fecha][campo] = valor;
+      localStorage.setItem(keyStorage, JSON.stringify(datos));
+    }
 
-            showToast("Cambios guardados");
-        }
+    function sincronizarInputCard(fecha, campo, valor) {
+      const input = containerCards.querySelector(`[data-fecha="${fecha}"][data-campo="${campo}"]`);
+      if (input) input.value = valor;
+    }
 
-        // Clear All entries for active month view
-        function clearCurrentMonthData() {
-            if (confirm("¿Estás seguro de que deseas borrar todas las asignaciones de este mes?")) {
-                const storageKey = `${STORAGE_PREFIX}data_${currentYear}_${currentMonth}`;
-                localStorage.removeItem(storageKey);
-                renderSchedule();
-                showToast("Cronograma del mes limpiado");
-            }
-        }
+    function sincronizarCeldaTabla(fecha, campo, valor) {
+      const celda = tbodyPrivilegios.querySelector(`[data-fecha="${fecha}"][data-campo="${campo}"]`);
+      if (celda) celda.innerText = valor;
+    }
 
-        // ================= NOTES LOGIC =================
-        function getStoredNotes() {
-            return JSON.parse(localStorage.getItem(`${STORAGE_PREFIX}notes`) || '[]');
-        }
+    // GESTIÓN DE NOTAS
+    function renderizarNotas() {
+      const year = fechaActual.getFullYear();
+      const month = fechaActual.getMonth();
+      const keyNotas = `notas_${year}_${month}`;
+      const notas = JSON.parse(localStorage.getItem(keyNotas)) || [];
 
-        function saveNotes(notes) {
-            localStorage.setItem(`${STORAGE_PREFIX}notes`, JSON.stringify(notes));
-            renderNotes();
-        }
+      listaNotas.innerHTML = '';
 
-        function addNote(e) {
-            e.preventDefault();
-            const titleInput = document.getElementById('note-title');
-            const detailInput = document.getElementById('note-detail');
+      if (notas.length === 0) {
+        listaNotas.innerHTML = `<li class="text-xs text-slate-400 italic py-1">No hay notas guardadas para este mes.</li>`;
+        return;
+      }
 
-            const title = titleInput.value.trim();
-            const detail = detailInput.value.trim();
+      notas.forEach((nota, index) => {
+        const li = document.createElement('li');
+        li.className = 'flex items-center justify-between p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 hover:bg-slate-100 transition';
+        li.innerHTML = `
+          <div class="flex items-center gap-2">
+            <i class="fa-regular fa-bookmark text-indigo-500"></i>
+            <span>${nota}</span>
+          </div>
+          <button onclick="eliminarNota(${index})" class="no-print text-slate-400 hover:text-red-500 p-1 transition" title="Eliminar nota">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        `;
+        listaNotas.appendChild(li);
+      });
+    }
 
-            if (!title || !detail) return;
+    function agregarNota() {
+      const texto = inputNota.value.trim();
+      if (!texto) return;
 
-            const notes = getStoredNotes();
-            const newNote = {
-                id: Date.now(),
-                title: title,
-                detail: detail,
-                date: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })
-            };
+      const year = fechaActual.getFullYear();
+      const month = fechaActual.getMonth();
+      const keyNotas = `notas_${year}_${month}`;
+      const notas = JSON.parse(localStorage.getItem(keyNotas)) || [];
 
-            notes.unshift(newNote);
-            saveNotes(notes);
+      notas.push(texto);
+      localStorage.setItem(keyNotas, JSON.stringify(notas));
 
-            titleInput.value = '';
-            detailInput.value = '';
-            showToast("Nota agregada");
-        }
+      inputNota.value = '';
+      renderizarNotas();
+    }
 
-        function deleteNote(id) {
-            let notes = getStoredNotes();
-            notes = notes.filter(n => n.id !== id);
-            saveNotes(notes);
-            showToast("Nota eliminada");
-        }
+    function eliminarNota(index) {
+      const year = fechaActual.getFullYear();
+      const month = fechaActual.getMonth();
+      const keyNotas = `notas_${year}_${month}`;
+      const notas = JSON.parse(localStorage.getItem(keyNotas)) || [];
 
-        function renderNotes() {
-            const notesList = document.getElementById('notes-list');
-            const badge = document.getElementById('notes-badge');
-            const notes = getStoredNotes();
+      notas.splice(index, 1);
+      localStorage.setItem(keyNotas, JSON.stringify(notas));
+      renderizarNotas();
+    }
 
-            if (notes.length > 0) {
-                badge.innerText = notes.length;
-                badge.classList.remove('hidden');
-            } else {
-                badge.classList.add('hidden');
-            }
+    // COPIAR PARA WHATSAPP
+    function copiarParaWhatsApp() {
+      const year = fechaActual.getFullYear();
+      const month = fechaActual.getMonth();
+      const keyStorage = `privilegios_${year}_${month}`;
+      const keyNotas = `notas_${year}_${month}`;
 
-            notesList.innerHTML = '';
+      const datos = JSON.parse(localStorage.getItem(keyStorage)) || {};
+      const notas = JSON.parse(localStorage.getItem(keyNotas)) || [];
+      const fechas = obtenerFechasEspeciales(year, month);
 
-            if (notes.length === 0) {
-                notesList.innerHTML = `
-                    <div class="col-span-full text-center py-8 text-slate-400 bg-white rounded-xl border border-dashed border-slate-300">
-                        <i class="fa-regular fa-clipboard text-3xl mb-2 text-slate-300"></i>
-                        <p class="text-sm font-medium">No hay notas o avisos registrados.</p>
-                    </div>
-                `;
-                return;
-            }
+      let mensaje = `*AGENDA DE PRIVILEGIOS - ${meses[month].toUpperCase()} ${year}*\n\n`;
 
-            notes.forEach(note => {
-                const card = document.createElement('div');
-                card.className = "bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between hover:shadow-md transition";
-                card.innerHTML = `
-                    <div>
-                        <div class="flex justify-between items-start mb-2">
-                            <h4 class="font-bold text-slate-800 text-base leading-snug">${escapeHtml(note.title)}</h4>
-                            <span class="text-[10px] font-semibold bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full whitespace-nowrap">${note.date}</span>
-                        </div>
-                        <p class="text-slate-600 text-sm whitespace-pre-line leading-relaxed">${escapeHtml(note.detail)}</p>
-                    </div>
-                    <div class="mt-4 pt-3 border-t border-slate-100 flex justify-end">
-                        <button onclick="deleteNote(${note.id})" class="text-xs text-rose-500 hover:text-rose-700 font-medium flex items-center space-x-1 transition p-1">
-                            <i class="fa-solid fa-trash-can"></i>
-                            <span>Eliminar</span>
-                        </button>
-                    </div>
-                `;
-                notesList.appendChild(card);
-            });
-        }
+      fechas.forEach(f => {
+        const d = datos[f.iso] || {};
+        mensaje += `📅 *${f.formatoTexto}*\n`;
+        if (d.diaconado) mensaje += `• Diaconado: ${d.diaconado}\n`;
+        if (d.alabanza)  mensaje += `• Alabanza: ${d.alabanza}\n`;
+        if (d.predica)   mensaje += `• Prédica: ${d.predica}\n`;
+        if (d.multimedia)mensaje += `• Multimedia: ${d.multimedia}\n`;
+        mensaje += `\n`;
+      });
 
-        // Copy Format for WhatsApp Sharing
-        function copyForWhatsApp() {
-            const dates = getChurchDates(currentYear, currentMonth);
-            const storageKey = `${STORAGE_PREFIX}data_${currentYear}_${currentMonth}`;
-            const monthData = JSON.parse(localStorage.getItem(storageKey) || '{}');
+      if (notas.length > 0) {
+        mensaje += `📌 *NOTAS Y AVISOS:*\n`;
+        notas.forEach(n => mensaje += `- ${n}\n`);
+      }
 
-            let text = `*PROGRAMACIÓN DE PRIVILEGIOS*\n`;
-            text += `🗓️ *${monthNames[currentMonth]} ${currentYear}*\n`;
-            text += `-----------------------------------\n\n`;
-
-            dates.forEach(d => {
-                const dateKey = formatDateKey(d);
-                const dayName = dayNames[d.getDay()];
-                const formattedDateNum = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
-                
-                const data = monthData[dateKey] || {};
-
-                text += `📌 *${dayName} ${formattedDateNum}*\n`;
-                if(data.diaconado) text += `• Diaconado: ${data.diaconado}\n`;
-                if(data.alabanza)  text += `• Alabanza: ${data.alabanza}\n`;
-                if(data.predica)   text += `• Prédica: ${data.predica}\n`;
-                if(data.multimedia)text += `• Multimedia: ${data.multimedia}\n`;
-                if(!data.diaconado && !data.alabanza && !data.predica && !data.multimedia) {
-                    text += `_(Sin asignar)_\n`;
-                }
-                text += `\n`;
-            });
-
-            const notes = getStoredNotes();
-            if (notes.length > 0) {
-                text += `📝 *AVISOS & NOTAS:* \n`;
-                notes.forEach(n => {
-                    text += `• *${n.title}*: ${n.detail}\n`;
-                });
-            }
-
-            const dummy = document.createElement("textarea");
-            document.body.appendChild(dummy);
-            dummy.value = text;
-            dummy.select();
-            document.execCommand("copy");
-            document.body.removeChild(dummy);
-
-            showToast("¡Copiado al portapapeles para WhatsApp!");
-        }
-
-        function escapeHtml(str) {
-            if (!str) return '';
-            return str
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
-
-        let toastTimeout;
-        function showToast(message) {
-            const toast = document.getElementById('toast');
-            const toastMsg = document.getElementById('toast-message');
-            
-            toastMsg.innerText = message;
-            toast.classList.remove('translate-y-20', 'opacity-0');
-            toast.classList.add('translate-y-0', 'opacity-100');
-
-            clearTimeout(toastTimeout);
-            toastTimeout = setTimeout(() => {
-                toast.classList.remove('translate-y-0', 'opacity-100');
-                toast.classList.add('translate-y-20', 'opacity-0');
-            }, 2500);
-        }
-    </script>
+      navigator.clipboard.writeText(mensaje).then(() => {
+        alert("¡Agenda copiada con éxito! Ya puedes pegarla en tu grupo de WhatsApp.");
+      }).catch(err => {
+        console.error("Error al copiar: ", err);
+      });
+    }
+  </script>
 </body>
 </html>
