@@ -14,11 +14,25 @@
       body { background: white; color: black; }
       .print-shadow-none { box-shadow: none !important; border: 1px solid #ccc; }
     }
-    /* Estilo para que la celda se edite limpiamente */
+    /* Estilo para celdas y áreas editables */
     [contenteditable="true"]:focus {
       outline: 2px solid #3b82f6;
       background-color: #eff6ff;
       border-radius: 0.25rem;
+    }
+
+    /* COLUMNA DE FECHA FIJA (STICKY) AL DESPLAZARSE HORIZONTALMENTE */
+    .sticky-col-header {
+      position: sticky;
+      left: 0;
+      z-index: 20;
+      background-color: #1e1b4b; /* bg-indigo-950/90 para la cabecera */
+    }
+    .sticky-col-cell {
+      position: sticky;
+      left: 0;
+      z-index: 10;
+      box-shadow: 2px 0 5px -2px rgba(0, 0, 0, 0.1);
     }
   </style>
 </head>
@@ -68,7 +82,7 @@
   <!-- Contenedor Principal -->
   <main class="max-w-6xl mx-auto px-2 sm:px-4 mt-4 sm:mt-6 space-y-6">
 
-    <!-- Alternador de vista Móvil / Tabla -->
+    <!-- Barra informativa / Vista Móvil -->
     <div class="flex justify-between items-center bg-white p-3 rounded-xl shadow-sm border border-slate-200">
       <div class="text-xs sm:text-sm text-slate-500 flex items-center gap-1.5">
         <i class="fa-solid fa-circle-info text-indigo-600"></i>
@@ -97,12 +111,12 @@
         </span>
       </div>
 
-      <!-- VISTA EN TABLA (Predeterminada para Pantallas Medianas/Grandes) -->
+      <!-- VISTA EN TABLA (Con primera columna fija) -->
       <div id="container-table" class="overflow-x-auto">
-        <table class="w-full text-left border-collapse min-w-[600px]">
+        <table class="w-full text-left border-collapse min-w-[650px]">
           <thead>
             <tr class="bg-indigo-900 text-white text-xs uppercase tracking-wider">
-              <th class="p-3 w-40 border-r border-indigo-800">Fecha / Día</th>
+              <th class="p-3 w-48 border-r border-indigo-800 sticky-col-header">Fecha / Día</th>
               <th class="p-3 border-r border-indigo-800">Diaconado</th>
               <th class="p-3 border-r border-indigo-800">Alabanza</th>
               <th class="p-3 border-r border-indigo-800">Prédica</th>
@@ -121,34 +135,29 @@
       </div>
     </section>
 
-    <!-- SECCIÓN 2: APARTADO DE NOTAS / AVISOS -->
+    <!-- SECCIÓN 2: APARTADO DE NOTAS / AVISOS EDITABLE -->
     <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden print-shadow-none">
-      <div class="p-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
-        <h2 class="font-bold text-slate-800 flex items-center gap-2 text-base sm:text-lg">
-          <i class="fa-regular fa-note-sticky text-indigo-600"></i>
-          Notas y Avisos Importantes
-        </h2>
-      </div>
-
-      <div class="p-4 space-y-4">
-        <!-- Formulario Agregar Nota -->
-        <form id="form-nota" class="flex flex-col sm:flex-row gap-2 no-print">
+      <div class="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+        <div class="flex items-center gap-2 w-full">
+          <i class="fa-regular fa-note-sticky text-indigo-600 text-lg"></i>
+          <!-- Título Editable -->
           <input 
             type="text" 
-            id="input-nota" 
-            placeholder="Escribe una nota o aviso rápido (ej: Ensayos, Anuncios, Limpieza)..." 
-            required 
-            class="flex-grow px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+            id="titulo-notas" 
+            placeholder="Título de la nota (ej: Avisos y Ensayos)..." 
+            class="font-bold text-slate-800 text-base sm:text-lg bg-transparent border-b border-transparent hover:border-slate-300 focus:border-indigo-500 focus:outline-none w-full transition px-1"
           >
-          <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition flex items-center justify-center gap-1.5 shadow-sm active:scale-95">
-            <i class="fa-solid fa-plus"></i> Agregar
-          </button>
-        </form>
+        </div>
+      </div>
 
-        <!-- Lista de Notas -->
-        <ul id="lista-notas" class="space-y-2">
-          <!-- Notas generadas dinámicamente -->
-        </ul>
+      <div class="p-4">
+        <!-- Área de Contenido de Notas Editable -->
+        <textarea 
+          id="contenido-notas" 
+          rows="5" 
+          placeholder="Escribe aquí las notas, recordatorios o avisos importantes para este mes (ej: Ensayos el viernes a las 7 PM, Limpieza del templo a cargo del diaconado)..." 
+          class="w-full p-3 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none transition resize-y"
+        ></textarea>
       </div>
     </section>
 
@@ -158,16 +167,15 @@
   <script>
     // Variables globales
     let fechaActual = new Date();
-    let modoVista = 'cards'; // 'cards' o 'table' para vista móvil
+    let modoVista = 'cards';
 
     // Elementos DOM
     const labelMesAno = document.getElementById('label-mes-ano');
     const tbodyPrivilegios = document.getElementById('tbody-privilegios');
     const containerCards = document.getElementById('container-cards');
     const containerTable = document.getElementById('container-table');
-    const formNota = document.getElementById('form-nota');
-    const inputNota = document.getElementById('input-nota');
-    const listaNotas = document.getElementById('lista-notas');
+    const tituloNotas = document.getElementById('titulo-notas');
+    const contenidoNotas = document.getElementById('contenido-notas');
     const btnCopy = document.getElementById('btn-copy');
     const btnViewCards = document.getElementById('btn-view-cards');
     const btnViewTable = document.getElementById('btn-view-table');
@@ -193,10 +201,9 @@
       btnViewCards.addEventListener('click', () => cambiarVistaMovil('cards'));
       btnViewTable.addEventListener('click', () => cambiarVistaMovil('table'));
 
-      formNota.addEventListener('submit', (e) => {
-        e.preventDefault();
-        agregarNota();
-      });
+      // Eventos para guardar Título y Contenido de Notas
+      tituloNotas.addEventListener('input', guardarNotas);
+      contenidoNotas.addEventListener('input', guardarNotas);
 
       btnCopy.addEventListener('click', copiarParaWhatsApp);
     });
@@ -229,14 +236,14 @@
       // Actualizar cabecera
       labelMesAno.textContent = `${meses[month]} ${year}`;
 
-      // Obtener fechas relevantes (Miércoles, Sábados, Domingos) del mes actual + primer Domingo del siguiente
+      // Obtener fechas relevantes (Miércoles, Sábados, Domingos) del mes completo + continuidad hasta el primer Domingo del siguiente
       const fechas = obtenerFechasEspeciales(year, month);
 
-      // Cargar datos previos
+      // Cargar datos previos de la tabla
       const keyStorage = `privilegios_${year}_${month}`;
       const datosGuardados = JSON.parse(localStorage.getItem(keyStorage)) || {};
 
-      // Renderizar Tabla
+      // Renderizar Tabla y Tarjetas
       tbodyPrivilegios.innerHTML = '';
       containerCards.innerHTML = '';
 
@@ -244,13 +251,16 @@
         const idFecha = f.iso;
         const datos = datosGuardados[idFecha] || { diaconado: '', alabanza: '', predica: '', multimedia: '' };
 
-        // 1. Fila de la Tabla
+        // Color de fondo para la celda fija según si es del mes o del siguiente mes
+        const bgCeldaFija = f.esSiguienteMes ? 'bg-amber-100' : 'bg-slate-100';
+
+        // 1. Fila de la Tabla (Se añade clase 'sticky-col-cell' a la primera columna)
         const tr = document.createElement('tr');
-        tr.className = f.esSiguienteMes ? 'bg-amber-50/60 font-medium' : 'hover:bg-slate-50 transition';
+        tr.className = f.esSiguienteMes ? 'bg-amber-50/70 font-medium' : 'hover:bg-slate-50 transition';
 
         tr.innerHTML = `
-          <td class="p-3 font-semibold text-slate-700 border-r border-slate-200">
-            <div class="flex items-center justify-between">
+          <td class="p-3 font-semibold text-slate-700 border-r border-slate-200 sticky-col-cell ${bgCeldaFija}">
+            <div class="flex items-center justify-between gap-1">
               <span>${f.formatoTexto}</span>
               ${f.esSiguienteMes ? '<span class="text-[10px] bg-amber-200 text-amber-800 px-1.5 py-0.5 rounded font-bold">Prox. Mes</span>' : ''}
             </div>
@@ -294,14 +304,14 @@
         containerCards.appendChild(card);
       });
 
-      // Event listeners para guardar datos
+      // Escuchar cambios en la tabla/tarjetas
       escucharCambiosLectura(keyStorage);
 
-      // Renderizar Notas
-      renderizarNotas();
+      // Cargar Notas guardadas
+      cargarNotas();
     }
 
-    // Generar días: Miércoles, Sábados y Domingos del mes + primer Domingo del siguiente mes
+    // Generar días: Miércoles, Sábados y Domingos de todo el mes + continuidad hasta el primer Domingo del siguiente
     function obtenerFechasEspeciales(year, month) {
       const fechas = [];
       
@@ -320,7 +330,7 @@
         }
       }
 
-      // 2. Primer Domingo del mes siguiente
+      // 2. Continuidad hacia el mes siguiente hasta encontrar el primer Domingo
       let nextMonth = month + 1;
       let nextYear = year;
       if (nextMonth > 11) {
@@ -328,24 +338,31 @@
         nextYear++;
       }
 
-      for (let d = 1; d <= 7; d++) {
+      let d = 1;
+      while (true) {
         const dateObj = new Date(nextYear, nextMonth, d);
-        if (dateObj.getDay() === 0) { // Domingo
+        const dayOfWeek = dateObj.getDay();
+
+        if (dayOfWeek === 3 || dayOfWeek === 6 || dayOfWeek === 0) {
           fechas.push({
             iso: `${nextYear}-${nextMonth + 1}-${d}`,
-            formatoTexto: `${diasSemana[0]} ${d} (${meses[nextMonth]})`,
+            formatoTexto: `${diasSemana[dayOfWeek]} ${d} (${meses[nextMonth]})`,
             esSiguienteMes: true
           });
-          break;
+
+          if (dayOfWeek === 0) {
+            break;
+          }
         }
+        d++;
+        if (d > 10) break;
       }
 
       return fechas;
     }
 
-    // Escuchar cambios para auto-guardar
+    // Escuchar cambios para auto-guardar tabla/tarjetas
     function escucharCambiosLectura(keyStorage) {
-      // Guardado desde la tabla editable
       const celdas = tbodyPrivilegios.querySelectorAll('[contenteditable="true"]');
       celdas.forEach(celda => {
         celda.addEventListener('input', () => {
@@ -358,7 +375,6 @@
         });
       });
 
-      // Guardado desde las tarjetas móviles
       const inputsCard = containerCards.querySelectorAll('.input-card');
       inputsCard.forEach(input => {
         input.addEventListener('input', () => {
@@ -389,61 +405,32 @@
       if (celda) celda.innerText = valor;
     }
 
-    // GESTIÓN DE NOTAS
-    function renderizarNotas() {
+    // GESTIÓN DE NOTAS (Título + Texto Libre)
+    function cargarNotas() {
       const year = fechaActual.getFullYear();
       const month = fechaActual.getMonth();
-      const keyNotas = `notas_${year}_${month}`;
-      const notas = JSON.parse(localStorage.getItem(keyNotas)) || [];
+      const keyNotas = `notas_obj_${year}_${month}`;
 
-      listaNotas.innerHTML = '';
+      const datosNotas = JSON.parse(localStorage.getItem(keyNotas)) || {
+        titulo: 'Notas y Avisos Importantes',
+        contenido: ''
+      };
 
-      if (notas.length === 0) {
-        listaNotas.innerHTML = `<li class="text-xs text-slate-400 italic py-1">No hay notas guardadas para este mes.</li>`;
-        return;
-      }
-
-      notas.forEach((nota, index) => {
-        const li = document.createElement('li');
-        li.className = 'flex items-center justify-between p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 hover:bg-slate-100 transition';
-        li.innerHTML = `
-          <div class="flex items-center gap-2">
-            <i class="fa-regular fa-bookmark text-indigo-500"></i>
-            <span>${nota}</span>
-          </div>
-          <button onclick="eliminarNota(${index})" class="no-print text-slate-400 hover:text-red-500 p-1 transition" title="Eliminar nota">
-            <i class="fa-solid fa-trash-can"></i>
-          </button>
-        `;
-        listaNotas.appendChild(li);
-      });
+      tituloNotas.value = datosNotas.titulo;
+      contenidoNotas.value = datosNotas.contenido;
     }
 
-    function agregarNota() {
-      const texto = inputNota.value.trim();
-      if (!texto) return;
-
+    function guardarNotas() {
       const year = fechaActual.getFullYear();
       const month = fechaActual.getMonth();
-      const keyNotas = `notas_${year}_${month}`;
-      const notas = JSON.parse(localStorage.getItem(keyNotas)) || [];
+      const keyNotas = `notas_obj_${year}_${month}`;
 
-      notas.push(texto);
-      localStorage.setItem(keyNotas, JSON.stringify(notas));
+      const datosNotas = {
+        titulo: tituloNotas.value,
+        contenido: contenidoNotas.value
+      };
 
-      inputNota.value = '';
-      renderizarNotas();
-    }
-
-    function eliminarNota(index) {
-      const year = fechaActual.getFullYear();
-      const month = fechaActual.getMonth();
-      const keyNotas = `notas_${year}_${month}`;
-      const notas = JSON.parse(localStorage.getItem(keyNotas)) || [];
-
-      notas.splice(index, 1);
-      localStorage.setItem(keyNotas, JSON.stringify(notas));
-      renderizarNotas();
+      localStorage.setItem(keyNotas, JSON.stringify(datosNotas));
     }
 
     // COPIAR PARA WHATSAPP
@@ -451,10 +438,10 @@
       const year = fechaActual.getFullYear();
       const month = fechaActual.getMonth();
       const keyStorage = `privilegios_${year}_${month}`;
-      const keyNotas = `notas_${year}_${month}`;
+      const keyNotas = `notas_obj_${year}_${month}`;
 
       const datos = JSON.parse(localStorage.getItem(keyStorage)) || {};
-      const notas = JSON.parse(localStorage.getItem(keyNotas)) || [];
+      const datosNotas = JSON.parse(localStorage.getItem(keyNotas)) || { titulo: 'Notas y Avisos', contenido: '' };
       const fechas = obtenerFechasEspeciales(year, month);
 
       let mensaje = `*AGENDA DE PRIVILEGIOS - ${meses[month].toUpperCase()} ${year}*\n\n`;
@@ -469,9 +456,9 @@
         mensaje += `\n`;
       });
 
-      if (notas.length > 0) {
-        mensaje += `📌 *NOTAS Y AVISOS:*\n`;
-        notas.forEach(n => mensaje += `- ${n}\n`);
+      if (datosNotas.contenido.trim() !== '') {
+        mensaje += `📌 *${(datosNotas.titulo || 'NOTAS Y AVISOS').toUpperCase()}:*\n`;
+        mensaje += `${datosNotas.contenido.trim()}\n`;
       }
 
       navigator.clipboard.writeText(mensaje).then(() => {
@@ -483,3 +470,4 @@
   </script>
 </body>
 </html>
+
